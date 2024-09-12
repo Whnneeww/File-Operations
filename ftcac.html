@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+<link rel="apple-touch-icon" sizes="180x180" href="https://icon.i-i.f5.si/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://icon.i-i.f5.si/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://icon.i-i.f5.si/favicon-16x16.png">
+<link rel="manifest" href="https://icon.i-i.f5.si/site.webmanifest">
+    <title>ファイルZIPアーカイブデモ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <h1>ファイルをZIPにまとめてダウンロード</h1>
+    <input type="file" id="fileInput" multiple>
+    <input type="text" id="zipFileName" placeholder="新しいZIPファイル名（拡張子.zip）">
+    
+    <label for="dateInput">日付を選択（YYYY-MM-DD HH:mm:ss UTC）:</label>
+    <input type="text" id="dateInput" placeholder="例: 2262-11-19 03:14:07">
+
+    <button id="processButton">ファイルをZIPアーカイブする</button>
+
+    <script>
+        document.getElementById('processButton').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const zipFileName = document.getElementById('zipFileName').value;
+            const dateInput = document.getElementById('dateInput').value;
+
+            if (fileInput.files.length === 0) {
+                alert('ファイルを選択してください！');
+                return;
+            }
+
+            if (!zipFileName.endsWith('.zip')) {
+                alert('ZIPファイル名には拡張子.zipを付けてください！');
+                return;
+            }
+
+            const zip = new JSZip();
+            let specifiedTime;
+
+            // 日付入力がある場合はその日付を使用し、ない場合はデフォルトの2262年11月19日03:14:07 UTCを使用する
+            if (dateInput) {
+                const [dateString, timeString] = dateInput.split(' ');
+                const [year, month, day] = dateString.split('-').map(Number);
+                const [hour, minute, second] = timeString.split(':').map(Number);
+                specifiedTime = new Date(Date.UTC(year, month - 1, day, hour, minute, second)).getTime();
+            } else {
+                // デフォルトの日付
+                specifiedTime = new Date(Date.UTC(2262, 10, 19, 3, 14, 7)).getTime();
+            }
+
+            // 各ファイルをZIPに追加します
+            for (const file of fileInput.files) {
+                const arrayBuffer = await file.arrayBuffer();
+                zip.file(file.name, arrayBuffer, { date: new Date(specifiedTime) });
+            }
+
+            // ZIPを生成しユーザーにダウンロードさせます
+            zip.generateAsync({ type: 'blob' })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = zipFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    alert('ZIPファイルがダウンロードされました！');
+                });
+        });
+    </script>
+</body>
+</html>

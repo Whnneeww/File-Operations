@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイル生成とZIPダウンロード</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <h1>ファイル生成とZIPダウンロード</h1>
+    
+    <label for="fileCount">ファイルを生成する数を入力してください:</label>
+    <input type="number" id="fileCount" value="1" min="1">
+    
+    <button id="generateFilesButton">ファイルを生成してダウンロード</button>
+
+    <script>
+        document.getElementById('generateFilesButton').addEventListener('click', async function() {
+            const fileCount = parseInt(document.getElementById('fileCount').value);
+            const zip = new JSZip();
+            const baseYear = -292277056; // BCに相当する年数
+
+            // 各ファイルをZIPに追加します
+            for (let i = 0; i < fileCount; i++) {
+                const fileName = `${i}.txt`; // ファイル名は生成したファイルの数
+                const creationDate = new Date(baseYear + i, 0, 1, 0, 0, 0); // 1年ずつ増加
+                
+                // 1.0バイトのファイルを生成
+                const fileContent = new Uint8Array(0); // 1.0バイトのファイル（空ではなく1バイト）
+                zip.file(fileName, fileContent, {
+                    date: creationDate // カスタム日付を設定
+                });
+            }
+
+            // ZIPファイルを生成
+            const content = await zip.generateAsync({ type: 'blob' });
+
+            // ダウンロード用のリンクを作成
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'generated_files.zip';
+            document.body.appendChild(a);
+            a.click();
+
+            // リソースの解放
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>MIDI to WHMID Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/midi-parser-js/1.1.0/midi-parser.js"></script>
+    <script src="https://program-library.i-i.f5.si/js/WhmidLibrary/1.0.0.js"></script>
+</head>
+<body>
+    <h1>MIDIファイルをWHMIDに変換</h1>
+    <input type="file" id="midiFileInput" accept=".mid" />
+    <button id="convertButton" disabled>変換</button>
+
+    <script>
+        const convertButton = document.getElementById('convertButton');
+        const midiFileInput = document.getElementById('midiFileInput');
+        
+        midiFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const midiData = await file.arrayBuffer();
+                const midi = new Midi(midiData);
+                convertButton.disabled = false;
+            }
+        });
+
+        convertButton.addEventListener('click', () => {
+            const whmid = new WhmidLibrary();
+            whmid.setVersion(0);
+            whmid.setTempo(120);
+
+            midi.tracks.forEach(track => {
+                track.notes.forEach(note => {
+                    // 音符の追加（ピッチ、楽器、長さ、など）
+                    whmid.addNote(note.midi, 1, note.duration * 1000, 1, note.time * 1000, 1, 120);
+                });
+            });
+
+            whmid.generateWhmidFile();
+        });
+    </script>
+</body>
+</html>

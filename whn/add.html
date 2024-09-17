@@ -3,54 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ファイルをWhnアーカイブ化</title>
+    <title>ファイルとフォルダーをWhnアーカイブ化</title>
     <script src="https://program-library.i-i.f5.si/js/whn/2.0.1.js"></script>
     <style>
-        #dropZone {
+        #fileInput {
+            display: none; /* ファイル入力を非表示に */
+        }
+        #fileLabel {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
             width: 300px;
-            height: 200px;
-            border: 2px dashed #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto;
             text-align: center;
+            margin: 20px auto;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <h1>ファイルをWhnアーカイブ化</h1>
-    <div id="dropZone">ここにファイルをドラッグ＆ドロップしてください</div>
+    <h1>ファイルとフォルダーをWhnアーカイブ化</h1>
+    <label id="fileLabel" for="fileInput">ファイルやフォルダーを選択してください</label>
+    <input type="file" id="fileInput" webkitdirectory multiple accept="*/*">
     <button id="downloadArchive" style="display: none;">アーカイブをダウンロード</button>
 
     <script>
-        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
         const downloadButton = document.getElementById('downloadArchive');
         let items = [];
 
-        dropZone.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            dropZone.style.borderColor = 'blue';
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.style.borderColor = '#ccc';
-        });
-
-        dropZone.addEventListener('drop', (event) => {
-            event.preventDefault();
-            dropZone.style.borderColor = '#ccc';
-
-            const files = event.dataTransfer.files;
+        fileInput.addEventListener('change', (event) => {
+            const files = event.target.files;
             items = [];
 
             for (const file of files) {
-                const item = new WhneewwItem(file.name, 'file');
+                const item = new WhneewwItem(file.webkitRelativePath || file.name, 'file'); // フォルダーの場合は相対パスを、通常のファイルは名前を使用
                 items.push(item);
             }
 
             downloadButton.style.display = 'block';
-            console.log('Dropped files:', items);
+            console.log('Selected items:', items);
         });
 
         downloadButton.addEventListener('click', () => {

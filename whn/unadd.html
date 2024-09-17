@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whnアーカイブを復元してZIPダウンロード</title>
+    <script src="https://program-library.i-i.f5.si/js/whn/2.0.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <h1>Whnアーカイブを復元してZIPダウンロード</h1>
+    <input type="file" id="archiveInput" accept=".whn">
+    <button id="downloadZip" style="display: none;">ZIPファイルをダウンロード</button>
+
+    <script>
+        const downloadButton = document.getElementById('downloadZip');
+
+        document.getElementById('archiveInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const blob = await file.arrayBuffer();
+                const items = await WhneewwArchive.extract(blob);
+
+                // ZIPファイルを作成
+                const zip = new JSZip();
+                items.forEach(item => {
+                    if (item.type === 'file') {
+                        // ファイル名でファイルを追加
+                        zip.file(item.name, item.content || ""); // contentが必要な場合、適宜処理
+                    }
+                });
+
+                // ZIPファイルのダウンロードリンクを作成
+                zip.generateAsync({ type: "blob" })
+                    .then(function(content) {
+                        const url = URL.createObjectURL(content);
+                        downloadButton.style.display = 'block';
+                        downloadButton.onclick = function() {
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'whn-archive.zip';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        };
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

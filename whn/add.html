@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイルをWhnアーカイブ化</title>
+    <script src="https://program-library.i-i.f5.si/js/whn/2.0.1.js"></script>
+    <style>
+        #dropZone {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>ファイルをWhnアーカイブ化</h1>
+    <div id="dropZone">ここにファイルをドラッグ＆ドロップしてください</div>
+    <button id="downloadArchive" style="display: none;">アーカイブをダウンロード</button>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const downloadButton = document.getElementById('downloadArchive');
+        let items = [];
+
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.style.borderColor = 'blue';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#ccc';
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.style.borderColor = '#ccc';
+
+            const files = event.dataTransfer.files;
+            items = [];
+
+            for (const file of files) {
+                const item = new WhneewwItem(file.name, 'file');
+                items.push(item);
+            }
+
+            downloadButton.style.display = 'block';
+            console.log('Dropped files:', items);
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const blob = WhneewwArchive.create(items);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'archive.whn';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>

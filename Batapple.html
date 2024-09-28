@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>動画フレーム抽出デモ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.8.0/jszip.min.js"></script>
 </head>
 <body>
     <h1>動画ファイルからフレームを抽出</h1>
     <input type="file" id="videoInput" accept="video/*">
     <button id="processButton" disabled>抽出開始</button>
     <div id="progress"></div>
-    
+
     <script>
         const videoInput = document.getElementById('videoInput');
         const processButton = document.getElementById('processButton');
@@ -36,35 +37,43 @@
         async function extractFrames(video) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            const zip = new JSZip(); // JSZipインスタンスの作成
+
             video.currentTime = 0;
 
             for (let i = 0; i < frameCount; i++) {
                 await new Promise((resolve) => {
-                    video.currentTime = i / 30; // iフレームを30fpsとして計算
+                    video.currentTime = i / 30; // 各フレームに対して30fpsで設定
                     video.addEventListener('seeked', function handler() {
                         video.removeEventListener('seeked', handler);
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         const pixels = [];
+
+                        // ピクセルデータを白黒に変換
                         for (let j = 0; j < imageData.data.length; j += 4) {
                             const avgPixel = (imageData.data[j] + imageData.data[j + 1] + imageData.data[j + 2]) / 3;
                             pixels.push(avgPixel < 128 ? 0 : 1);
                         }
-                        downloadFile(`frame_${String(i).padStart(4, '0')}.txt`, pixels);
+
+                        // ピクセルデータをZIPに追加
+                        zip.file(`frame_${String(i).padStart(4, '0')}.txt`, pixels.join('\n'));
+
+                        // 進捗状況を表示
                         progressDiv.innerText = `処理中: ${i + 1} / ${frameCount}`;
                         resolve();
                     });
                 });
             }
-            progressDiv.innerText = '全てのフレームを処理しました！';
-        }
 
-        function downloadFile(filename, data) {
-            const blob = new Blob([data.join('\n')], { type: 'text/plain' });
+            // ZIPファイルを生成してダウンロード
+            const content = await zip.generateAsync({ type: 'blob' });
             const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = filename;
+            link.href = window.URL.createObjectURL(content);
+            link.download = 'frames.zip';
             link.click();
+
+            progressDiv.innerText = '全てのフレームを処理し、ZIPとしてダウンロードしました！';
         }
     </script>
 </body>

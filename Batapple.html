@@ -3,66 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>動画フレームをTXTに変換</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <title>動画フレーム抽出デモ</title>
 </head>
 <body>
-    <h1>動画フレームをTXTに変換してZIP化</h1>
-    <input type="file" id="videoFile" accept="video/*">
-    <button id="processButton">処理開始</button>
-
+    <h1>動画ファイルからフレームを抽出</h1>
+    <input type="file" id="videoInput" accept="video/*">
+    <button id="processButton" disabled>抽出開始</button>
+    <div id="progress"></div>
+    
     <script>
-        document.getElementById('processButton').addEventListener('click', async () => {
-            const videoFile = document.getElementById('videoFile').files[0];
-            if (!videoFile) {
-                alert("ビデオファイルをアップロードしてください！");
-                return;
+        const videoInput = document.getElementById('videoInput');
+        const processButton = document.getElementById('processButton');
+        const progressDiv = document.getElementById('progress');
+        let frameCount = 0;
+
+        videoInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                processButton.disabled = false;
             }
-
-            const video = document.createElement('video');
-            const zip = new JSZip();
-            let frameCount = 0;
-
-            video.src = URL.createObjectURL(videoFile);
-            video.addEventListener('loadeddata', async () => {
-                if (video.readyState >= 2) {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = video.videoWidth; // 動画の幅に合わせる
-                    canvas.height = video.videoHeight; // 動画の高さに合わせる
-
-                    // 動画のフレームを1つずつ処理する
-                    while (video.currentTime < video.duration) {
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const frameData = context.getImageData(0, 0, canvas.width, canvas.height).data;
-                        let txtData = '';
-
-                        // 画素データを白黒に変換
-                        for (let i = 0; i < frameData.length; i += 4) {
-                            const avgColor = (frameData[i] + frameData[i + 1] + frameData[i + 2]) / 3;
-                            txtData += avgColor < 128 ? '1' : '0'; // 黒なら1、白なら0
-                        }
-
-                        // ファイル名を設定
-                        const fileName = `frame_${String(frameCount).padStart(4, '0')}.txt`;
-                        zip.file(fileName, txtData);
-                        frameCount++;
-
-                        // 1フレームごとに進める（30fpsを仮定）
-                        await new Promise(resolve => video.currentTime += (1 / 30)); 
-                    }
-
-                    // ZIPファイルの生成
-                    const zipContent = await zip.generateAsync({ type: "blob" });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(zipContent);
-                    link.download = 'frames.zip';
-                    link.click();
-                }
-            });
-
-            video.load();
         });
+
+        processButton.addEventListener('click', () => {
+            if (videoInput.files.length === 0) return;
+            const video = document.createElement('video');
+            video.src = URL.createObjectURL(videoInput.files[0]);
+            video.addEventListener('loadeddata', () => {
+                frameCount = Math.floor(video.duration * 30); // 30fpsとして扱う
+                extractFrames(video);
+            });
+        });
+
+        async function extractFrames(video) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            video.currentTime = 0;
+
+            for (let i = 0; i < frameCount; i++) {
+                await new Promise((resolve) => {
+                    video.currentTime = i / 30; // iフレームを30fpsとして計算
+                    video.addEventListener('seeked', function handler() {
+                        video.removeEventListener('seeked', handler);
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const pixels = [];
+                        for (let j = 0; j < imageData.data.length; j += 4) {
+                            const avgPixel = (imageData.data[j] + imageData.data[j + 1] + imageData.data[j + 2]) / 3;
+                            pixels.push(avgPixel < 128 ? 0 : 1);
+                        }
+                        downloadFile(`frame_${String(i).padStart(4, '0')}.txt`, pixels);
+                        progressDiv.innerText = `処理中: ${i + 1} / ${frameCount}`;
+                        resolve();
+                    });
+                });
+            }
+            progressDiv.innerText = '全てのフレームを処理しました！';
+        }
+
+        function downloadFile(filename, data) {
+            const blob = new Blob([data.join('\n')], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
     </script>
 </body>
 </html>

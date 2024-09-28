@@ -11,11 +11,17 @@
     <input type="file" id="videoInput" accept="video/*">
     <button id="processButton" disabled>抽出開始</button>
     <div id="progress"></div>
+    <div id="downloadLink" style="display:none;">
+        <p>ダウンロードリンク: <a id="downloadAnchor" href="#" download="frames.zip">ここをクリックしてダウンロード</a></p>
+    </div>
 
     <script>
         const videoInput = document.getElementById('videoInput');
         const processButton = document.getElementById('processButton');
         const progressDiv = document.getElementById('progress');
+        const downloadLinkDiv = document.getElementById('downloadLink');
+        const downloadAnchor = document.getElementById('downloadAnchor');
+        
         let frameCount = 0;
 
         videoInput.addEventListener('change', (event) => {
@@ -66,14 +72,13 @@
                 });
             }
 
-            // ZIPファイルを生成してダウンロード
+            // ZIPファイルを生成してダウンロードリンクを表示
             const content = await zip.generateAsync({ type: 'blob' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(content);
-            link.download = 'frames.zip';
-            link.click();
+            const url = window.URL.createObjectURL(content);
+            downloadAnchor.href = url;
+            downloadLinkDiv.style.display = 'block'; // ダウンロードリンクを表示
 
-            progressDiv.innerText = '全てのフレームを処理し、ZIPとしてダウンロードしました！';
+            progressDiv.innerText = '全てのフレームを処理しました！ダウンロードリンクが表示されました。';
         }
     </script>
 </body>

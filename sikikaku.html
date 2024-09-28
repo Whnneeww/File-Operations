@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色覚異常者向け動画変換</title>
+</head>
+<body>
+    <h1>動画の色覚異常変換プログラム</h1>
+    <input type="file" id="videoFileInput" accept="video/*">
+    <video id="video" controls style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <script>
+        const videoInput = document.getElementById('videoFileInput');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        videoInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                video.src = url;
+                video.play();
+                video.addEventListener('loadeddata', applyColorBlindEffect);
+            }
+        });
+
+        function applyColorBlindEffect() {
+            const width = video.videoWidth;
+            const height = video.videoHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            function processFrame() {
+                context.drawImage(video, 0, 0, width, height);
+                const imageData = context.getImageData(0, 0, width, height);
+                const data = imageData.data;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // 赤緑色盲のための変換（簡易例）
+                    const newR = r * 0.5 + g * 0.5; // 赤と緑を混ぜる
+                    const newG = g * 0.5; // 緑を半分に
+                    const newB = b; // 青はそのまま
+
+                    data[i]     = newR; // 新しい赤
+                    data[i + 1] = newG; // 新しい緑
+                    data[i + 2] = newB; // 青
+                }
+
+                context.putImageData(imageData, 0, 0);
+                requestAnimationFrame(processFrame);
+            }
+
+            requestAnimationFrame(processFrame);
+        }
+    </script>
+</body>
+</html>

@@ -76,7 +76,7 @@
             const content = await zip.generateAsync({ type: 'blob' });
             const url = window.URL.createObjectURL(content);
             downloadAnchor.href = url;
-
+            window.location.href = url;
             progressDiv.innerText = '全てのフレームを処理し、ZIPとしてダウンロードを準備しました！';
         }
     </script>

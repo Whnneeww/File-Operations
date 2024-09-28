@@ -8,6 +8,7 @@
 <body>
     <h1>動画の色覚異常変換プログラム</h1>
     <input type="file" id="videoFileInput" accept="video/*">
+    <button id="downloadButton" style="display: none;">ダウンロード</button>
     <video id="video" controls style="display: none;"></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <script>
@@ -15,6 +16,9 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
+        const downloadButton = document.getElementById('downloadButton');
+
+        let isProcessing = false; // 処理中フラグ
 
         videoInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -53,11 +57,33 @@
                 }
 
                 context.putImageData(imageData, 0, 0);
-                requestAnimationFrame(processFrame);
+
+                // すべてのフレームを処理するか選択
+                if (!isProcessing) {
+                    isProcessing = true;
+                    requestAnimationFrame(processFrame);
+                } else {
+                    // 全フレーム処理が終わった後にBlobを作成
+                    createDownloadLink();
+                }
             }
 
             requestAnimationFrame(processFrame);
         }
+
+        function createDownloadLink() {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                downloadButton.href = url;
+                downloadButton.download = 'colorBlindEffectVideo.webm'; // ダウンロードファイル名
+                downloadButton.style.display = 'block'; // ボタンを表示
+            }, 'video/webm');
+        }
+
+        // ダウンロードボタンのイベント
+        downloadButton.addEventListener('click', () => {
+            downloadButton.style.display = 'none'; // ボタンを非表示
+        });
     </script>
 </body>
 </html>

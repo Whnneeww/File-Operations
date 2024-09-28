@@ -11,7 +11,7 @@
     <input type="file" id="videoInput" accept="video/*">
     <button id="processButton" disabled>抽出開始</button>
     <div id="progress"></div>
-    <div id="downloadLink" style="display:none;">
+    <div id="downloadLink">
         <p>ダウンロードリンク: <a id="downloadAnchor" href="#" download="frames.zip">ここをクリックしてダウンロード</a></p>
     </div>
 
@@ -76,7 +76,6 @@
             const content = await zip.generateAsync({ type: 'blob' });
             const url = window.URL.createObjectURL(content);
             downloadAnchor.href = url;
-            downloadLinkDiv.style.display = 'block'; // ダウンロードリンクを表示
 
             progressDiv.innerText = '全てのフレームを処理し、ZIPとしてダウンロードを準備しました！';
         }

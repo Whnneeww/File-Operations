@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Receiver</title>
+</head>
+<body>
+    <h1>情報を受信しています...</h1>
+    <div id="receivedMessage"></div> <!-- 受信したメッセージを表示する場所 -->
+
+    <button id="openSenderButton">情報を送信する</button> <!-- 送信側を開くボタン -->
+
+    <script>
+        // 受信したメッセージを処理するリスナー
+        window.addEventListener('message', (event) => {
+            const allowedOrigin = 'account.i-i.f5.si'; // 受け入れオリジンの設定
+
+            // オリジンの確認
+            if (event.origin === allowedOrigin) {
+                const receivedData = event.data; // 受信データ
+                document.getElementById('receivedMessage').textContent = JSON.stringify(receivedData.info, null, 2); // データを表示
+            } else {
+                console.warn('不正なオリジンからのメッセージ:', event.origin);
+            }
+        });
+
+        // 情報を送信するためのボタンのクリックイベント
+        document.getElementById('openSenderButton').addEventListener('click', () => {
+            const url = 'https://account.i-i.f5.si/?url=https://file-operations.whpjt.f5.si'; // ここに自身のURLを設定
+            window.open(url, '_blank'); // 新しいタブで開く
+        });
+    </script>
+</body>
+</html>
